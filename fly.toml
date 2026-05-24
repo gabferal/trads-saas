@@ -1,7 +1,7 @@
 # fly.toml – Configuração de deploy no Fly.io
 # Execute: fly launch (na primeira vez) ou fly deploy
 
-app = "translacoes-app"          # Altere para o nome único da sua app no Fly
+app = "trads-saas"          # Altere para o nome único da sua app no Fly
 primary_region = "gru"           # São Paulo – mais próximo do Brasil/Paraguai
 
 [build]
