@@ -1,41 +1,41 @@
-# fly.toml – Configuração de deploy no Fly.io
-# Execute: fly launch (na primeira vez) ou fly deploy
+# fly.toml app configuration file generated for trads-saas on 2026-05-24T22:04:56Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
-app = "translacoes-app"          # Altere para o nome único da sua app no Fly
-primary_region = "gru"           # São Paulo – mais próximo do Brasil/Paraguai
+app = 'trads-saas'
+primary_region = 'gru'
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = 'Dockerfile'
 
 [env]
-  PORT = "8000"
-  # DATABASE_URL e SECRET_KEY devem ser definidos como secrets:
-  # fly secrets set DATABASE_URL="postgresql://neondb_owner:npg_IBLjro0Psp5J@ep-falling-wildflower-aceu8am6-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
-  # fly secrets set SECRET_KEY="e404aeb6eb264aff1b303a51668cf627"
+  PORT = '8000'
 
 [http_service]
-  internal_port = 8000
-  force_https   = true
-  auto_stop_machines  = true
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
 
   [http_service.concurrency]
-    type       = "connections"
+    type = 'connections'
     hard_limit = 25
     soft_limit = 20
 
-[[vm]]
-  memory = "512mb"    # Suficiente para FastAPI + SQLAlchemy em uso moderado
-  cpu_kind = "shared"
-  cpus = 1
-
 [checks]
   [checks.health]
-    grace_period = "10s"
-    interval     = "30s"
-    method       = "GET"
-    path         = "/api/dashboard/metrics"
-    port         = 8000
-    timeout      = "5s"
-    type         = "http"
+    port = 8000
+    type = 'http'
+    interval = '30s'
+    timeout = '5s'
+    grace_period = '10s'
+    method = 'GET'
+    path = '/api/dashboard/metrics'
+
+[[vm]]
+  memory = '512mb'
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 256
