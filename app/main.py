@@ -62,25 +62,39 @@ ROTAS_PUBLICAS = {"/api/auth/login", "/api/auth/register", "/docs", "/openapi.js
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
     """
-    Extrai o user_id do token JWT e coloca em request.state.
-    Rotas públicas passam sem token. Rotas de API retornam 401 se token inválido.
+    Middleware de autenticação:
+    - Normaliza a URL para evitar erros de barra no final.
+    - Libera rotas públicas, /health e arquivos estáticos.
+    - Valida token JWT em rotas /api.
     """
     path = request.url.path
+    # Normaliza: remove a barra no final, exceto se for a raiz "/"
+    normalized_path = path.rstrip('/') if path != "/" else "/"
+    
+    # Sua lista original com a adição do /health
+    ROTAS_PUBLICAS = {"/api/auth/login", "/api/auth/register", "/docs", "/openapi.json", "/", "/health"}
 
     # Libera rotas públicas e arquivos estáticos
-    if path in ROTAS_PUBLICAS or path.startswith("/static") or not path.startswith("/api"):
-        response = await call_next(request)
-        return response
+    if (normalized_path in ROTAS_PUBLICAS or 
+        path.startswith("/static") or 
+        not path.startswith("/api")):
+        return await call_next(request)
 
+    # Validação do Token para rotas sob /api
     token = request.headers.get("Authorization", "").removeprefix("Bearer ").strip()
     payload = decodificar_token(token) if token else None
 
     if not payload:
-        return Response(content='{"detail":"Não autenticado"}', status_code=401, media_type="application/json")
+        return Response(
+            content='{"detail":"Não autenticado"}', 
+            status_code=401, 
+            media_type="application/json"
+        )
 
+    # Injeta user_id no estado da request
     request.state.user_id = int(payload.get("sub", 0))
-    response = await call_next(request)
-    return response
+    
+    return await call_next(request)
 
 
 # ──────────────────────────────────────────────
