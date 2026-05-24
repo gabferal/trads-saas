@@ -1,0 +1,41 @@
+# fly.toml – Configuração de deploy no Fly.io
+# Execute: fly launch (na primeira vez) ou fly deploy
+
+app = "translacoes-app"          # Altere para o nome único da sua app no Fly
+primary_region = "gru"           # São Paulo – mais próximo do Brasil/Paraguai
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8000"
+  # DATABASE_URL e SECRET_KEY devem ser definidos como secrets:
+  # fly secrets set DATABASE_URL="postgresql+psycopg2://user:pass@host/db?sslmode=require"
+  # fly secrets set SECRET_KEY="sua-chave-secreta-aleatoria"
+
+[http_service]
+  internal_port = 8000
+  force_https   = true
+  auto_stop_machines  = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type       = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+[[vm]]
+  memory = "512mb"    # Suficiente para FastAPI + SQLAlchemy em uso moderado
+  cpu_kind = "shared"
+  cpus = 1
+
+[checks]
+  [checks.health]
+    grace_period = "10s"
+    interval     = "30s"
+    method       = "GET"
+    path         = "/api/dashboard/metrics"
+    port         = 8000
+    timeout      = "5s"
+    type         = "http"

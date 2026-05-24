@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TranslaDoc – Gestão de Traduções</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+
+  <!-- ── Login Screen ─────────────────────────────────────── -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <div class="login-brand">
+        <span class="brand-icon">⟨T⟩</span>
+        <h1>TranslaDoc</h1>
+        <p>Gestão de Traduções & Legalizações</p>
+      </div>
+      <form id="login-form" onsubmit="return false;">
+        <div class="field-group">
+          <label>E-mail</label>
+          <input type="email" id="login-email" placeholder="seu@email.com" value="mariana@translacoes.com" autocomplete="email"/>
+        </div>
+        <div class="field-group">
+          <label>Senha</label>
+          <input type="password" id="login-password" placeholder="••••••••" value="admin123"/>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="handleLogin()">Entrar</button>
+        <p id="login-error" class="error-msg hidden"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── App Shell ──────────────────────────────────────────── -->
+  <div id="app" class="app hidden">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-icon">⟨T⟩</span>
+        <span>TranslaDoc</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" data-page="dashboard">
+          <span class="nav-icon">◈</span> Dashboard
+        </a>
+        <a href="#" class="nav-item" data-page="clientes">
+          <span class="nav-icon">◉</span> Clientes
+        </a>
+        <a href="#" class="nav-item" data-page="ordens">
+          <span class="nav-icon">◫</span> Ordens de Serviço
+        </a>
+        <a href="#" class="nav-item" data-page="documentos">
+          <span class="nav-icon">◧</span> Documentos
+        </a>
+        <a href="#" class="nav-item" data-page="malotes">
+          <span class="nav-icon">◩</span> Malotes
+        </a>
+        <a href="#" class="nav-item" data-page="financeiro">
+          <span class="nav-icon">◎</span> Financeiro
+        </a>
+        <a href="#" class="nav-item" data-page="auditoria">
+          <span class="nav-icon">◷</span> Auditoria
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <span id="user-name-display"></span>
+        <button class="btn-logout" onclick="handleLogout()">Sair</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- DASHBOARD -->
+      <section id="page-dashboard" class="page active">
+        <header class="page-header">
+          <h2>Dashboard</h2>
+          <span class="page-sub">Visão geral operacional</span>
+        </header>
+        <div class="metrics-grid" id="metrics-grid">
+          <div class="metric-card loading" id="metric-pendentes">
+            <div class="metric-label">Pendentes de Tradução</div>
+            <div class="metric-value">—</div>
+          </div>
+          <div class="metric-card loading" id="metric-transito">
+            <div class="metric-label">Documentos em Trânsito</div>
+            <div class="metric-value">—</div>
+          </div>
+          <div class="metric-card loading" id="metric-malotes">
+            <div class="metric-label">Malotes Abertos</div>
+            <div class="metric-value">—</div>
+          </div>
+          <div class="metric-card loading" id="metric-faturamento">
+            <div class="metric-label">Faturamento do Mês</div>
+            <div class="metric-value">—</div>
+          </div>
+          <div class="metric-card loading" id="metric-fiscal">
+            <div class="metric-label">Pendências Fiscais</div>
+            <div class="metric-value">—</div>
+          </div>
+        </div>
+
+        <div class="dash-grid-2">
+          <div class="card">
+            <div class="card-header">
+              <h3>Documentos Recentes</h3>
+              <button class="btn btn-sm" onclick="navigate('documentos')">Ver todos</button>
+            </div>
+            <div id="dash-docs-list" class="table-container"><div class="loading-row">Carregando...</div></div>
+          </div>
+          <div class="dash-right-col">
+            <div class="card" style="margin-bottom:0">
+              <div class="card-header">
+                <h3>Documentos por Status</h3>
+              </div>
+              <div class="chart-container">
+                <canvas id="chart-status"></canvas>
+              </div>
+            </div>
+            <div class="card" style="margin-bottom:0">
+              <div class="card-header">
+                <h3>Atividade Recente</h3>
+              </div>
+              <div id="dash-audit-list" class="audit-list"><div class="loading-row">Carregando...</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CLIENTES -->
+      <section id="page-clientes" class="page">
+        <header class="page-header">
+          <h2>Clientes</h2>
+          <button class="btn btn-primary" onclick="openModal('modal-cliente')">+ Novo Cliente</button>
+        </header>
+        <div class="card">
+          <div id="clientes-table" class="table-container"><div class="loading-row">Carregando...</div></div>
+        </div>
+      </section>
+
+      <!-- ORDENS DE SERVIÇO -->
+      <section id="page-ordens" class="page">
+        <header class="page-header">
+          <h2>Ordens de Serviço</h2>
+          <button class="btn btn-primary" onclick="openModal('modal-os')">+ Nova OS</button>
+        </header>
+        <div class="card">
+          <div id="os-table" class="table-container"><div class="loading-row">Carregando...</div></div>
+        </div>
+      </section>
+
+      <!-- DOCUMENTOS -->
+      <section id="page-documentos" class="page">
+        <header class="page-header">
+          <h2>Documentos</h2>
+          <div class="header-actions">
+            <select id="doc-filter-status" onchange="loadDocumentos()" class="select-filter">
+              <option value="">Todos os status</option>
+              <option value="Recebido">Recebido</option>
+              <option value="Em Tradução">Em Tradução</option>
+              <option value="Traduzido">Traduzido</option>
+              <option value="Em Trânsito">Em Trânsito</option>
+              <option value="Finalizado">Finalizado</option>
+            </select>
+            <button class="btn btn-primary" onclick="openModal('modal-documento')">+ Novo Documento</button>
+          </div>
+        </header>
+        <div class="card">
+          <div id="docs-table" class="table-container"><div class="loading-row">Carregando...</div></div>
+        </div>
+      </section>
+
+      <!-- MALOTES -->
+      <section id="page-malotes" class="page">
+        <header class="page-header">
+          <h2>Malotes</h2>
+          <button class="btn btn-primary" onclick="openModal('modal-malote')">+ Novo Malote</button>
+        </header>
+
+        <!-- Bulk assign widget -->
+        <div class="card bulk-assign-card">
+          <h3>Atribuição em Lote</h3>
+          <p class="hint">Selecione documentos sem malote e atribua a um malote existente.</p>
+          <div class="bulk-controls">
+            <select id="bulk-malote-select" class="select-filter">
+              <option value="">Selecione o malote destino...</option>
+            </select>
+            <button class="btn btn-accent" onclick="executeBulkAssign()">Atribuir Selecionados</button>
+          </div>
+          <div id="bulk-docs-list" class="bulk-docs-grid"><div class="loading-row">Carregando...</div></div>
+        </div>
+
+        <div class="card">
+          <div id="malotes-table" class="table-container"><div class="loading-row">Carregando...</div></div>
+        </div>
+      </section>
+
+      <!-- FINANCEIRO -->
+      <section id="page-financeiro" class="page">
+        <header class="page-header">
+          <h2>Financeiro</h2>
+          <button class="btn btn-primary" onclick="openModal('modal-financeiro')">+ Novo Lançamento</button>
+        </header>
+        <div class="card">
+          <div id="fin-table" class="table-container"><div class="loading-row">Carregando...</div></div>
+        </div>
+      </section>
+
+      <!-- AUDITORIA -->
+      <section id="page-auditoria" class="page">
+        <header class="page-header">
+          <h2>Logs de Auditoria</h2>
+        </header>
+        <div class="card">
+          <div id="audit-table" class="table-container"><div class="loading-row">Carregando...</div></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ────────────────────── MODALS ─────────────────────────── -->
+
+  <!-- Modal: Novo Cliente -->
+  <div id="modal-cliente" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Novo Cliente</h3>
+        <button onclick="closeModal('modal-cliente')" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field-group">
+          <label>Nome Completo</label>
+          <input type="text" id="c-nome" placeholder="Ex: Juan Carlos Rodríguez" />
+        </div>
+        <div class="field-group">
+          <label>WhatsApp</label>
+          <input type="text" id="c-whatsapp" placeholder="Ex: 595981234567" />
+        </div>
+        <div class="field-group">
+          <label>Observações</label>
+          <textarea id="c-obs" rows="2" placeholder="Opcional..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal('modal-cliente')">Cancelar</button>
+        <button class="btn btn-primary" onclick="salvarCliente()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Nova OS -->
+  <div id="modal-os" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Nova Ordem de Serviço</h3>
+        <button onclick="closeModal('modal-os')" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field-group">
+          <label>Cliente</label>
+          <select id="os-cliente-id"></select>
+        </div>
+        <div class="field-group">
+          <label>Descrição</label>
+          <textarea id="os-desc" rows="3" placeholder="Descreva o serviço..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal('modal-os')">Cancelar</button>
+        <button class="btn btn-primary" onclick="salvarOS()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Novo Documento -->
+  <div id="modal-documento" class="modal-overlay hidden">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3>Novo Documento</h3>
+        <button onclick="closeModal('modal-documento')" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field-row">
+          <div class="field-group">
+            <label>Ordem de Serviço</label>
+            <select id="doc-os-id"></select>
+          </div>
+          <div class="field-group">
+            <label>Documento Pai (opcional)</label>
+            <select id="doc-pai-id"><option value="">— Nenhum (documento raiz) —</option></select>
+          </div>
+        </div>
+        <div class="field-group">
+          <label>Tipo de Documento</label>
+          <input type="text" id="doc-tipo" list="tipos-sugeridos" placeholder="Ex: Plan de Estudios, Certificado de Calificaciones..." />
+          <datalist id="tipos-sugeridos">
+            <option value="Plan de Estudios (Plano Analítico)">
+            <option value="Programa de Estudios">
+            <option value="Certificado de Calificaciones">
+            <option value="Constancia de Calificaciones">
+            <option value="Ementa de Disciplinas">
+            <option value="Histórico Escolar">
+            <option value="Acta de Nacimiento (Certidão de Nascimento)">
+            <option value="Partida de Nacimiento">
+            <option value="Matrimonio Civil (Certidão de Casamento)">
+            <option value="Cédula de Identidad">
+            <option value="Certificado de Antecedentes Policiales">
+            <option value="Diploma de Graduación">
+            <option value="Apostilla de la Haya">
+          </datalist>
+        </div>
+        <div class="field-row">
+          <div class="field-group">
+            <label>Idioma Origem</label>
+            <input type="text" id="doc-origem" value="Espanhol" />
+          </div>
+          <div class="field-group">
+            <label>Idioma Destino</label>
+            <input type="text" id="doc-destino" value="Português" />
+          </div>
+        </div>
+        <div class="field-group">
+          <label>URL do Snapshot (imagem de conferência)</label>
+          <input type="text" id="doc-snapshot" placeholder="https://..." />
+        </div>
+        <div class="field-group">
+          <label>Observações</label>
+          <textarea id="doc-obs" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal('modal-documento')">Cancelar</button>
+        <button class="btn btn-primary" onclick="salvarDocumento()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Novo Malote -->
+  <div id="modal-malote" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Novo Malote</h3>
+        <button onclick="closeModal('modal-malote')" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field-group">
+          <label>Código de Identificação</label>
+          <input type="text" id="mal-codigo" placeholder="Ex: MAL-2026-004" />
+        </div>
+        <div class="field-group">
+          <label>Observações</label>
+          <textarea id="mal-obs" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal('modal-malote')">Cancelar</button>
+        <button class="btn btn-primary" onclick="salvarMalote()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Novo Lançamento Financeiro -->
+  <div id="modal-financeiro" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Novo Lançamento</h3>
+        <button onclick="closeModal('modal-financeiro')" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field-row">
+          <div class="field-group">
+            <label>Ordem de Serviço</label>
+            <select id="fin-os-id"></select>
+          </div>
+          <div class="field-group">
+            <label>Tipo</label>
+            <select id="fin-tipo">
+              <option value="Entrada">Entrada</option>
+              <option value="Saída">Saída</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-group">
+          <label>Descrição</label>
+          <input type="text" id="fin-desc" placeholder="Ex: Serviço de tradução juramentada" />
+        </div>
+        <div class="field-group">
+          <label>Valor (R$)</label>
+          <input type="number" id="fin-valor" min="0.01" step="0.01" placeholder="0,00" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal('modal-financeiro')">Cancelar</button>
+        <button class="btn btn-primary" onclick="salvarFinanceiro()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notifications -->
+  <div id="toast-container"></div>
+
+  <!-- OS Client Popover -->
+  <div id="os-popover" class="os-popover hidden">
+    <div class="os-popover-label">Cliente</div>
+    <div id="os-popover-name" class="os-popover-name"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
