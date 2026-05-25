@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TranslaDoc – Gestão de Traduções</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="/static/css/styles.css" />
 </head>
+
 <body>
 
   <!-- ── Login Screen ─────────────────────────────────────── -->
@@ -19,14 +22,15 @@
         <h1>TranslaDoc</h1>
         <p>Gestão de Traduções & Legalizações</p>
       </div>
-      <form id="login-form" onsubmit="return false;">
+      <form id="login-form" onsubmit="return false;" autocomplete="off">
         <div class="field-group">
           <label>E-mail</label>
-          <input type="email" id="login-email" placeholder="seu@email.com" value="mariana@translacoes.com" autocomplete="email"/>
+          <input type="email" id="login-email" placeholder="seu@email.com" autocomplete="off" readonly
+            onfocus="this.removeAttribute('readonly');" />
         </div>
         <div class="field-group">
           <label>Senha</label>
-          <input type="password" id="login-password" placeholder="••••••••" value="admin123"/>
+          <input type="password" id="login-password" placeholder="••••••••" autocomplete="new-password" />
         </div>
         <button class="btn btn-primary btn-full" onclick="handleLogin()">Entrar</button>
         <p id="login-error" class="error-msg hidden"></p>
@@ -110,7 +114,9 @@
               <h3>Documentos Recentes</h3>
               <button class="btn btn-sm" onclick="navigate('documentos')">Ver todos</button>
             </div>
-            <div id="dash-docs-list" class="table-container"><div class="loading-row">Carregando...</div></div>
+            <div id="dash-docs-list" class="table-container">
+              <div class="loading-row">Carregando...</div>
+            </div>
           </div>
           <div class="dash-right-col">
             <div class="card" style="margin-bottom:0">
@@ -125,7 +131,9 @@
               <div class="card-header">
                 <h3>Atividade Recente</h3>
               </div>
-              <div id="dash-audit-list" class="audit-list"><div class="loading-row">Carregando...</div></div>
+              <div id="dash-audit-list" class="audit-list">
+                <div class="loading-row">Carregando...</div>
+              </div>
             </div>
           </div>
         </div>
@@ -138,7 +146,9 @@
           <button class="btn btn-primary" onclick="openModal('modal-cliente')">+ Novo Cliente</button>
         </header>
         <div class="card">
-          <div id="clientes-table" class="table-container"><div class="loading-row">Carregando...</div></div>
+          <div id="clientes-table" class="table-container">
+            <div class="loading-row">Carregando...</div>
+          </div>
         </div>
       </section>
 
@@ -149,7 +159,9 @@
           <button class="btn btn-primary" onclick="openModal('modal-os')">+ Nova OS</button>
         </header>
         <div class="card">
-          <div id="os-table" class="table-container"><div class="loading-row">Carregando...</div></div>
+          <div id="os-table" class="table-container">
+            <div class="loading-row">Carregando...</div>
+          </div>
         </div>
       </section>
 
@@ -170,7 +182,9 @@
           </div>
         </header>
         <div class="card">
-          <div id="docs-table" class="table-container"><div class="loading-row">Carregando...</div></div>
+          <div id="docs-table" class="table-container">
+            <div class="loading-row">Carregando...</div>
+          </div>
         </div>
       </section>
 
@@ -191,11 +205,15 @@
             </select>
             <button class="btn btn-accent" onclick="executeBulkAssign()">Atribuir Selecionados</button>
           </div>
-          <div id="bulk-docs-list" class="bulk-docs-grid"><div class="loading-row">Carregando...</div></div>
+          <div id="bulk-docs-list" class="bulk-docs-grid">
+            <div class="loading-row">Carregando...</div>
+          </div>
         </div>
 
         <div class="card">
-          <div id="malotes-table" class="table-container"><div class="loading-row">Carregando...</div></div>
+          <div id="malotes-table" class="table-container">
+            <div class="loading-row">Carregando...</div>
+          </div>
         </div>
       </section>
 
@@ -206,7 +224,9 @@
           <button class="btn btn-primary" onclick="openModal('modal-financeiro')">+ Novo Lançamento</button>
         </header>
         <div class="card">
-          <div id="fin-table" class="table-container"><div class="loading-row">Carregando...</div></div>
+          <div id="fin-table" class="table-container">
+            <div class="loading-row">Carregando...</div>
+          </div>
         </div>
       </section>
 
@@ -216,7 +236,9 @@
           <h2>Logs de Auditoria</h2>
         </header>
         <div class="card">
-          <div id="audit-table" class="table-container"><div class="loading-row">Carregando...</div></div>
+          <div id="audit-table" class="table-container">
+            <div class="loading-row">Carregando...</div>
+          </div>
         </div>
       </section>
 
@@ -292,12 +314,15 @@
           </div>
           <div class="field-group">
             <label>Documento Pai (opcional)</label>
-            <select id="doc-pai-id"><option value="">— Nenhum (documento raiz) —</option></select>
+            <select id="doc-pai-id">
+              <option value="">— Nenhum (documento raiz) —</option>
+            </select>
           </div>
         </div>
         <div class="field-group">
           <label>Tipo de Documento</label>
-          <input type="text" id="doc-tipo" list="tipos-sugeridos" placeholder="Ex: Plan de Estudios, Certificado de Calificaciones..." />
+          <input type="text" id="doc-tipo" list="tipos-sugeridos"
+            placeholder="Ex: Plan de Estudios, Certificado de Calificaciones..." />
           <datalist id="tipos-sugeridos">
             <option value="Plan de Estudios (Plano Analítico)">
             <option value="Programa de Estudios">
@@ -414,4 +439,5 @@
   <script src="/static/js/api.js"></script>
   <script src="/static/js/app.js"></script>
 </body>
+
 </html>
