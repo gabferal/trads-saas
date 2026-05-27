@@ -38,6 +38,12 @@ class UserOut(BaseModel):
 class ClientCreate(BaseModel):
     nome_completo: str
     telefone_whatsapp: str
+    cpf_cnpj: Optional[str] = None
+    email: Optional[str] = None
+    cep: Optional[str] = None
+    endereco: Optional[str] = None
+    cidade: Optional[str] = None
+    estado: Optional[str] = None
     observacoes: Optional[str] = None
 
 
@@ -45,8 +51,37 @@ class ClientOut(BaseModel):
     id: int
     nome_completo: str
     telefone_whatsapp: str
+    cpf_cnpj: Optional[str] = None
+    email: Optional[str] = None
+    cep: Optional[str] = None
+    endereco: Optional[str] = None
+    cidade: Optional[str] = None
+    estado: Optional[str] = None
     data_cadastro: datetime
-    observacoes: Optional[str]
+    observacoes: Optional[str] = None
+
+    model_config = {"from_attributes": True}
+
+
+# ──────────────────────────────────────────────
+# Gestor
+# ──────────────────────────────────────────────
+
+class GestorCreate(BaseModel):
+    nome: str
+    observacoes: Optional[str] = None
+
+
+class GestorUpdate(BaseModel):
+    nome: Optional[str] = None
+    observacoes: Optional[str] = None
+
+
+class GestorOut(BaseModel):
+    id: int
+    nome: str
+    observacoes: Optional[str] = None
+    criado_em: datetime
 
     model_config = {"from_attributes": True}
 
@@ -57,20 +92,24 @@ class ClientOut(BaseModel):
 
 class ServiceOrderCreate(BaseModel):
     cliente_id: int
+    gestor_id: Optional[int] = None
     descricao: Optional[str] = None
 
 
 class ServiceOrderUpdate(BaseModel):
     status_geral: Optional[StatusOS] = None
+    gestor_id: Optional[int] = None
     descricao: Optional[str] = None
 
 
 class ServiceOrderOut(BaseModel):
     id: int
     cliente_id: int
+    gestor_id: Optional[int] = None
+    gestor_nome: Optional[str] = None
     data_abertura: datetime
     status_geral: StatusOS
-    descricao: Optional[str]
+    descricao: Optional[str] = None
 
     model_config = {"from_attributes": True}
 
@@ -192,10 +231,11 @@ class FinancialOut(BaseModel):
 
 class AuditLogOut(BaseModel):
     id: int
-    user_id: Optional[int]
+    user_id: Optional[int] = None
+    user_nome: Optional[str] = None
     acao: str
     entidade_afetada: str
-    detalhes: Optional[str]
+    detalhes: Optional[str] = None
     data_hora: datetime
 
     model_config = {"from_attributes": True}

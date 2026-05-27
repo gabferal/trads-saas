@@ -72,11 +72,29 @@ class Client(Base):
     id                = Column(Integer, primary_key=True, index=True)
     nome_completo     = Column(String(200), nullable=False)
     telefone_whatsapp = Column(String(30), nullable=False)
+    cpf_cnpj          = Column(String(20), nullable=True)
+    email             = Column(String(180), nullable=True)
+    cep               = Column(String(9), nullable=True)
+    endereco          = Column(String(300), nullable=True)
+    cidade            = Column(String(100), nullable=True)
+    estado            = Column(String(2), nullable=True)
     data_cadastro     = Column(DateTime(timezone=True), server_default=func.now())
     observacoes       = Column(Text, nullable=True)
 
     # relações
     ordens_servico    = relationship("ServiceOrder", back_populates="cliente")
+
+
+class Gestor(Base):
+    """Gestores que encaminham ordens com precificação diferenciada."""
+    __tablename__ = "gestores"
+
+    id          = Column(Integer, primary_key=True, index=True)
+    nome        = Column(String(150), nullable=False)
+    observacoes = Column(Text, nullable=True)
+    criado_em   = Column(DateTime(timezone=True), server_default=func.now())
+
+    ordens = relationship("ServiceOrder", back_populates="gestor")
 
 
 class ServiceOrder(Base):
@@ -85,14 +103,20 @@ class ServiceOrder(Base):
 
     id              = Column(Integer, primary_key=True, index=True)
     cliente_id      = Column(Integer, ForeignKey("clients.id"), nullable=False)
+    gestor_id       = Column(Integer, ForeignKey("gestores.id"), nullable=True)
     data_abertura   = Column(DateTime(timezone=True), server_default=func.now())
     status_geral    = Column(Enum(StatusOS), default=StatusOS.aberta, nullable=False)
     descricao       = Column(Text, nullable=True)
 
     # relações
     cliente         = relationship("Client", back_populates="ordens_servico")
+    gestor          = relationship("Gestor", back_populates="ordens")
     documentos      = relationship("Document", back_populates="ordem_servico")
     financeiros     = relationship("Financial", back_populates="ordem_servico")
+
+    @property
+    def gestor_nome(self):
+        return self.gestor.nome if self.gestor else None
 
 
 class Batch(Base):
@@ -175,3 +199,7 @@ class AuditLog(Base):
 
     # relações
     user             = relationship("User", back_populates="logs")
+
+    @property
+    def user_nome(self):
+        return self.user.nome if self.user else None

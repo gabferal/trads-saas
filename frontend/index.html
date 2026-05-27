@@ -54,6 +54,9 @@
         <a href="#" class="nav-item" data-page="clientes">
           <span class="nav-icon">◉</span> Clientes
         </a>
+        <a href="#" class="nav-item" data-page="gestores">
+          <span class="nav-icon">◐</span> Gestores
+        </a>
         <a href="#" class="nav-item" data-page="ordens">
           <span class="nav-icon">◫</span> Ordens de Serviço
         </a>
@@ -152,11 +155,32 @@
         </div>
       </section>
 
+      <!-- GESTORES -->
+      <section id="page-gestores" class="page">
+        <header class="page-header">
+          <div>
+            <h2>Gestores</h2>
+            <span class="page-sub">Parceiros com precificação diferenciada</span>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('modal-gestor')">+ Novo Gestor</button>
+        </header>
+        <div class="card">
+          <div id="gestores-table" class="table-container">
+            <div class="loading-row">Carregando...</div>
+          </div>
+        </div>
+      </section>
+
       <!-- ORDENS DE SERVIÇO -->
       <section id="page-ordens" class="page">
         <header class="page-header">
           <h2>Ordens de Serviço</h2>
-          <button class="btn btn-primary" onclick="openModal('modal-os')">+ Nova OS</button>
+          <div class="header-actions">
+            <select id="os-filter-gestor" onchange="loadOrdens()" class="select-filter">
+              <option value="">Todos os gestores</option>
+            </select>
+            <button class="btn btn-primary" onclick="openModal('modal-os')">+ Nova OS</button>
+          </div>
         </header>
         <div class="card">
           <div id="os-table" class="table-container">
@@ -249,23 +273,57 @@
 
   <!-- Modal: Novo Cliente -->
   <div id="modal-cliente" class="modal-overlay hidden">
-    <div class="modal">
+    <div class="modal modal-lg">
       <div class="modal-header">
         <h3>Novo Cliente</h3>
         <button onclick="closeModal('modal-cliente')" class="modal-close">✕</button>
       </div>
       <div class="modal-body">
-        <div class="field-group">
-          <label>Nome Completo</label>
-          <input type="text" id="c-nome" placeholder="Ex: Juan Carlos Rodríguez" />
+        <div class="field-row">
+          <div class="field-group">
+            <label>Nome Completo</label>
+            <input type="text" id="c-nome" placeholder="Ex: Juan Carlos Rodríguez" />
+          </div>
+          <div class="field-group">
+            <label>WhatsApp</label>
+            <input type="text" id="c-whatsapp" placeholder="Ex: 595981234567" />
+          </div>
         </div>
-        <div class="field-group">
-          <label>WhatsApp</label>
-          <input type="text" id="c-whatsapp" placeholder="Ex: 595981234567" />
+        <div class="field-row">
+          <div class="field-group">
+            <label>CPF / CNPJ</label>
+            <input type="text" id="c-cpf-cnpj" placeholder="000.000.000-00" />
+          </div>
+          <div class="field-group">
+            <label>E-mail</label>
+            <input type="email" id="c-email" placeholder="email@exemplo.com" />
+          </div>
         </div>
-        <div class="field-group">
-          <label>Observações</label>
-          <textarea id="c-obs" rows="2" placeholder="Opcional..."></textarea>
+        <div class="field-row">
+          <div class="field-group" style="grid-column: span 2">
+            <label>Endereço (Rua, nº, bairro)</label>
+            <input type="text" id="c-endereco" placeholder="Ex: Rua das Flores, 123, Centro" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-group">
+            <label>CEP</label>
+            <input type="text" id="c-cep" placeholder="00000-000" maxlength="9" />
+          </div>
+          <div class="field-group">
+            <label>Cidade</label>
+            <input type="text" id="c-cidade" placeholder="Ex: São Paulo" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-group">
+            <label>Estado (UF)</label>
+            <input type="text" id="c-estado" placeholder="SP" maxlength="2" style="text-transform:uppercase" />
+          </div>
+          <div class="field-group">
+            <label>Observações</label>
+            <input type="text" id="c-obs" placeholder="Opcional..." />
+          </div>
         </div>
       </div>
       <div class="modal-footer">
@@ -288,6 +346,12 @@
           <select id="os-cliente-id"></select>
         </div>
         <div class="field-group">
+          <label>Gestor <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-3)">(opcional)</span></label>
+          <select id="os-gestor-id">
+            <option value="">— Nenhum gestor —</option>
+          </select>
+        </div>
+        <div class="field-group">
           <label>Descrição</label>
           <textarea id="os-desc" rows="3" placeholder="Descreva o serviço..."></textarea>
         </div>
@@ -295,6 +359,30 @@
       <div class="modal-footer">
         <button class="btn" onclick="closeModal('modal-os')">Cancelar</button>
         <button class="btn btn-primary" onclick="salvarOS()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Novo Gestor -->
+  <div id="modal-gestor" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Novo Gestor</h3>
+        <button onclick="closeModal('modal-gestor')" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field-group">
+          <label>Nome</label>
+          <input type="text" id="g-nome" placeholder="Ex: Rodrigo Mendes" />
+        </div>
+        <div class="field-group">
+          <label>Observações</label>
+          <textarea id="g-obs" rows="2" placeholder="Opcional..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal('modal-gestor')">Cancelar</button>
+        <button class="btn btn-primary" onclick="salvarGestor()">Salvar</button>
       </div>
     </div>
   </div>
@@ -307,17 +395,9 @@
         <button onclick="closeModal('modal-documento')" class="modal-close">✕</button>
       </div>
       <div class="modal-body">
-        <div class="field-row">
-          <div class="field-group">
-            <label>Ordem de Serviço</label>
-            <select id="doc-os-id"></select>
-          </div>
-          <div class="field-group">
-            <label>Documento Pai (opcional)</label>
-            <select id="doc-pai-id">
-              <option value="">— Nenhum (documento raiz) —</option>
-            </select>
-          </div>
+        <div class="field-group">
+          <label>Ordem de Serviço</label>
+          <select id="doc-os-id"></select>
         </div>
         <div class="field-group">
           <label>Tipo de Documento</label>

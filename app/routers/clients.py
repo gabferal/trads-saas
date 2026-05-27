@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Client
+from app.models import Client, ServiceOrder, Document
 from app.schemas import ClientCreate, ClientOut
 
 router = APIRouter(prefix="/clients", tags=["Clientes"])
@@ -45,3 +45,16 @@ def atualizar_cliente(client_id: int, payload: ClientCreate, db: Session = Depen
     db.commit()
     db.refresh(c)
     return c
+
+
+@router.delete("/{client_id}", status_code=204)
+def deletar_cliente(client_id: int, db: Session = Depends(get_db)):
+    c = db.query(Client).filter(Client.id == client_id).first()
+    if not c:
+        raise HTTPException(404, "Cliente não encontrado")
+    # Verifica se há OS vinculadas
+    ordens = db.query(ServiceOrder).filter(ServiceOrder.cliente_id == client_id).count()
+    if ordens:
+        raise HTTPException(400, f"Cliente possui {ordens} ordem(s) de serviço. Remova-as primeiro.")
+    db.delete(c)
+    db.commit()

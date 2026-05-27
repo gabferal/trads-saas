@@ -17,7 +17,7 @@ from app.auth import decodificar_token
 
 # Importa todos os routers
 from app.routers import (
-    auth, clients, orders, documents, batches, financial, dashboard, audit
+    auth, clients, orders, documents, batches, financial, dashboard, audit, gestores
 )
 
 
@@ -114,6 +114,7 @@ app.include_router(batches.router,    prefix=API_PREFIX)
 app.include_router(financial.router,  prefix=API_PREFIX)
 app.include_router(dashboard.router,  prefix=API_PREFIX)
 app.include_router(audit.router,      prefix=API_PREFIX)
+app.include_router(gestores.router,   prefix=API_PREFIX)
 
 
 # ──────────────────────────────────────────────

@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "mcp__Claude_Preview__preview_start",
-      "Bash(pkill -f \"uvicorn app.main:app\")"
+      "Bash(pkill -f \"uvicorn app.main:app\")",
+      "Bash(PYTHONPATH=/Users/gabrielalvarez/trads-saas /Users/gabrielalvarez/trads-saas/venv/bin/python -m alembic revision --autogenerate -m \"add_gestores_client_nf_fields\")",
+      "Read(//Users/gabrielalvarez/trads-saas/venv/bin/**)",
+      "Bash(python3.13 --version)",
+      "Read(//usr/local/bin/**)",
+      "Read(//opt/homebrew/bin/**)"
     ]
   }
 }

@@ -8,6 +8,7 @@ let currentUser  = null;
 let allClients   = [];
 let allOrders    = [];
 let allBatches   = [];
+let allGestores  = [];
 let statusChart  = null;
 
 // ── Bootstrap ────────────────────────────────────────────────
@@ -61,6 +62,7 @@ function handleLogout() {
 // ── App Init ──────────────────────────────────────────────────
 
 function showApp() {
+  document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
   document.getElementById('user-name-display').textContent = currentUser.nome.split(' ')[0];
   navigate('dashboard');
@@ -82,6 +84,7 @@ function navigate(page) {
   const loaders = {
     dashboard:  loadDashboard,
     clientes:   loadClientes,
+    gestores:   loadGestores,
     ordens:     loadOrdens,
     documentos: loadDocumentos,
     malotes:    loadMalotes,
@@ -275,18 +278,21 @@ async function loadClientes() {
     const el = document.getElementById('clientes-table');
     if (!allClients.length) { el.innerHTML = '<div class="loading-row">Nenhum cliente cadastrado.</div>'; return; }
     el.innerHTML = `<table>
-      <thead><tr><th>Nome</th><th>WhatsApp</th><th>Cadastro</th><th>Ações</th></tr></thead>
+      <thead><tr><th>Nome</th><th>CPF/CNPJ</th><th>E-mail</th><th>WhatsApp</th><th>Cidade/UF</th><th>Ações</th></tr></thead>
       <tbody>${allClients.map(c => `<tr>
-        <td>${c.nome_completo}</td>
+        <td><strong>${c.nome_completo}</strong></td>
+        <td>${c.cpf_cnpj || '<span class="text-muted">—</span>'}</td>
+        <td>${c.email || '<span class="text-muted">—</span>'}</td>
         <td>
           <a class="btn-whatsapp" href="https://wa.me/${c.telefone_whatsapp}" target="_blank" rel="noopener">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
             ${c.telefone_whatsapp}
           </a>
         </td>
-        <td>${formatDate(c.data_cadastro)}</td>
-        <td>
+        <td>${c.cidade ? `${c.cidade}${c.estado ? '/' + c.estado.toUpperCase() : ''}` : '<span class="text-muted">—</span>'}</td>
+        <td style="white-space:nowrap">
           <button class="btn btn-sm" onclick="novaOSParaCliente(${c.id}, '${c.nome_completo.replace(/'/g,"\\'")}')">+ OS</button>
+          <button class="btn-icon" title="Excluir cliente" onclick="deletarCliente(${c.id}, '${c.nome_completo.replace(/'/g,"\\'")}')">✕</button>
         </td>
       </tr>`).join('')}</tbody>
     </table>`;
@@ -295,10 +301,25 @@ async function loadClientes() {
   }
 }
 
+async function deletarCliente(id, nome) {
+  if (!confirm(`Excluir cliente "${nome}"? Esta ação não pode ser desfeita.`)) return;
+  try {
+    await Api.clients.delete(id);
+    toast('Cliente excluído.');
+    loadClientes();
+  } catch (err) { toast(err.message, 'error'); }
+}
+
 async function salvarCliente() {
   const data = {
     nome_completo:     document.getElementById('c-nome').value.trim(),
     telefone_whatsapp: document.getElementById('c-whatsapp').value.trim(),
+    cpf_cnpj:          document.getElementById('c-cpf-cnpj').value.trim() || null,
+    email:             document.getElementById('c-email').value.trim() || null,
+    endereco:          document.getElementById('c-endereco').value.trim() || null,
+    cep:               document.getElementById('c-cep').value.trim() || null,
+    cidade:            document.getElementById('c-cidade').value.trim() || null,
+    estado:            document.getElementById('c-estado').value.trim().toUpperCase() || null,
     observacoes:       document.getElementById('c-obs').value.trim() || null,
   };
   if (!data.nome_completo || !data.telefone_whatsapp) { toast('Preencha nome e WhatsApp.', 'error'); return; }
@@ -310,20 +331,89 @@ async function salvarCliente() {
   } catch (err) { toast(err.message, 'error'); }
 }
 
+// ── Gestores ──────────────────────────────────────────────────
+
+async function loadGestores() {
+  try {
+    allGestores = await Api.gestores.list();
+    const el = document.getElementById('gestores-table');
+    if (!allGestores.length) { el.innerHTML = '<div class="loading-row">Nenhum gestor cadastrado.</div>'; return; }
+    el.innerHTML = `<table>
+      <thead><tr><th>Nome</th><th>Observações</th><th>Cadastro</th><th>Ações</th></tr></thead>
+      <tbody>${allGestores.map(g => `<tr>
+        <td><strong>${g.nome}</strong></td>
+        <td class="text-muted">${g.observacoes || '—'}</td>
+        <td>${formatDate(g.criado_em)}</td>
+        <td>
+          <button class="btn-icon" title="Excluir gestor" onclick="deletarGestor(${g.id}, '${g.nome.replace(/'/g,"\\'")}')">✕</button>
+        </td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  } catch (err) {
+    toast('Erro ao carregar gestores: ' + err.message, 'error');
+  }
+}
+
+async function salvarGestor() {
+  const data = {
+    nome:        document.getElementById('g-nome').value.trim(),
+    observacoes: document.getElementById('g-obs').value.trim() || null,
+  };
+  if (!data.nome) { toast('Informe o nome do gestor.', 'error'); return; }
+  try {
+    await Api.gestores.create(data);
+    toast('Gestor cadastrado!');
+    closeModal('modal-gestor');
+    document.getElementById('g-nome').value = '';
+    document.getElementById('g-obs').value = '';
+    loadGestores();
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+async function deletarGestor(id, nome) {
+  if (!confirm(`Excluir gestor "${nome}"? As OS vinculadas serão desvinculadas.`)) return;
+  try {
+    await Api.gestores.delete(id);
+    toast('Gestor excluído.');
+    loadGestores();
+  } catch (err) { toast(err.message, 'error'); }
+}
+
 // ── Ordens de Serviço ─────────────────────────────────────────
 
 async function loadOrdens() {
   try {
-    [allOrders, allClients] = await Promise.all([Api.orders.list(), Api.clients.list()]);
+    const gestorFiltro = document.getElementById('os-filter-gestor')?.value || '';
+    const params = gestorFiltro ? { gestor_id: gestorFiltro } : {};
+
+    [allOrders, allClients, allGestores] = await Promise.all([
+      Api.orders.list(params),
+      Api.clients.list(),
+      Api.gestores.list(),
+    ]);
+
+    // Popula filtro de gestor
+    const filterSel = document.getElementById('os-filter-gestor');
+    if (filterSel && filterSel.options.length <= 1) {
+      allGestores.forEach(g => {
+        const opt = document.createElement('option');
+        opt.value = g.id;
+        opt.textContent = g.nome;
+        filterSel.appendChild(opt);
+      });
+      if (gestorFiltro) filterSel.value = gestorFiltro;
+    }
+
     const clientMap = Object.fromEntries(allClients.map(c => [c.id, c.nome_completo]));
     const el = document.getElementById('os-table');
     if (!allOrders.length) { el.innerHTML = '<div class="loading-row">Nenhuma OS encontrada.</div>'; return; }
     el.innerHTML = `<table>
-      <thead><tr><th>#</th><th>Cliente</th><th>Descrição</th><th>Status</th><th>Abertura</th><th>Ações</th></tr></thead>
+      <thead><tr><th>#</th><th>Cliente</th><th>Gestor</th><th>Descrição</th><th>Status</th><th>Abertura</th><th>Ações</th></tr></thead>
       <tbody>${allOrders.map(o => `<tr>
         <td>#${o.id}</td>
         <td>${clientMap[o.cliente_id] || '—'}</td>
-        <td class="text-muted" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.descricao || '—'}</td>
+        <td>${o.gestor_nome ? `<span class="badge" style="background:var(--accent-dim);color:var(--accent)">${o.gestor_nome}</span>` : '<span class="text-muted">—</span>'}</td>
+        <td class="text-muted" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.descricao || '—'}</td>
         <td>${badgeStatus(o.status_geral)}</td>
         <td>${formatDate(o.data_abertura)}</td>
         <td>
@@ -348,8 +438,10 @@ async function updateOSStatus(id, status) {
 }
 
 async function salvarOS() {
+  const gestorVal = document.getElementById('os-gestor-id').value;
   const data = {
     cliente_id: parseInt(document.getElementById('os-cliente-id').value),
+    gestor_id:  gestorVal ? parseInt(gestorVal) : null,
     descricao:  document.getElementById('os-desc').value.trim() || null,
   };
   if (!data.cliente_id) { toast('Selecione um cliente.', 'error'); return; }
@@ -363,9 +455,12 @@ async function salvarOS() {
 
 function novaOSParaCliente(clienteId, nome) {
   navigate('ordens');
-  setTimeout(() => {
+  setTimeout(async () => {
     openModal('modal-os');
-    populateClienteSelect('os-cliente-id', clienteId);
+    await Promise.all([
+      populateClienteSelect('os-cliente-id', clienteId),
+      populateGestorSelect('os-gestor-id'),
+    ]);
   }, 100);
 }
 
@@ -375,64 +470,49 @@ async function loadDocumentos() {
   try {
     const status = document.getElementById('doc-filter-status')?.value || '';
     const params = status ? { status } : {};
-    const [docs, orders] = await Promise.all([
-      Api.documents.list({ ...params, apenas_raiz: true }),
+    const [docs, orders, clients] = await Promise.all([
+      Api.documents.list(params),
       Api.orders.list(),
+      Api.clients.list(),
     ]);
-    allOrders = orders;
-    renderDocsTable(docs);
+    allOrders  = orders;
+    allClients = clients;
+    const clientMap = Object.fromEntries(clients.map(c => [c.id, c.nome_completo]));
+    const osClientMap = Object.fromEntries(orders.map(o => [o.id, clientMap[o.cliente_id] || '—']));
+    renderDocsTable(docs, osClientMap);
   } catch (err) {
     toast('Erro ao carregar documentos: ' + err.message, 'error');
   }
 }
 
-function renderDocsTable(docs) {
+function renderDocsTable(docs, osClientMap = {}) {
   const el = document.getElementById('docs-table');
   if (!docs.length) { el.innerHTML = '<div class="loading-row">Nenhum documento encontrado.</div>'; return; }
 
-  let rows = '';
-  docs.forEach(doc => {
-    rows += renderDocRow(doc, false);
-    // Filhos (um nível)
-    if (doc.filhos && doc.filhos.length) {
-      doc.filhos.forEach(filho => {
-        rows += renderDocRow(filho, true);
-      });
-    }
-  });
-
   el.innerHTML = `<table>
-    <thead><tr><th>Tipo</th><th>OS</th><th>Status</th><th>Malote</th><th>Snapshot</th><th>Ações</th></tr></thead>
-    <tbody>${rows}</tbody>
+    <thead><tr><th>Tipo de Documento</th><th>Cliente</th><th>OS</th><th>Status</th><th>Malote</th><th>Snapshot</th><th></th></tr></thead>
+    <tbody>${docs.map(doc => {
+      const cliente = osClientMap[doc.os_id] || '—';
+      const snapshotLink = doc.snapshot_url
+        ? `<a class="snapshot-link" href="${doc.snapshot_url}" target="_blank">Ver</a>`
+        : '<span class="text-muted">—</span>';
+      return `<tr>
+        <td>${doc.tipo_documento}</td>
+        <td class="text-muted">${cliente}</td>
+        <td>#${doc.os_id}</td>
+        <td>
+          <select class="status-select" onchange="updateDocStatus(${doc.id}, this.value)">
+            ${['Recebido','Em Tradução','Traduzido','Em Trânsito','Finalizado'].map(s =>
+              `<option value="${s}" ${s === doc.status_documento ? 'selected' : ''}>${s}</option>`
+            ).join('')}
+          </select>
+        </td>
+        <td>${doc.malote_id ? `#${doc.malote_id}` : '<span class="text-muted">—</span>'}</td>
+        <td>${snapshotLink}</td>
+        <td><button class="btn-icon" title="Excluir" onclick="deletarDoc(${doc.id})">✕</button></td>
+      </tr>`;
+    }).join('')}</tbody>
   </table>`;
-}
-
-function renderDocRow(doc, isFilho) {
-  const indent = isFilho
-    ? `<span class="doc-tree-child" style="color:var(--text-3);margin-right:4px">└</span>`
-    : '';
-  const snapshotLink = doc.snapshot_url
-    ? `<a class="snapshot-link" href="${doc.snapshot_url}" target="_blank">Ver</a>`
-    : '<span class="text-muted">—</span>';
-
-  return `<tr>
-    <td style="padding-left:${isFilho ? '28px' : '16px'}">
-      ${indent}${doc.tipo_documento}
-    </td>
-    <td>#${doc.os_id}</td>
-    <td>
-      <select class="status-select" onchange="updateDocStatus(${doc.id}, this.value)">
-        ${['Recebido','Em Tradução','Traduzido','Em Trânsito','Finalizado'].map(s =>
-          `<option value="${s}" ${s === doc.status_documento ? 'selected' : ''}>${s}</option>`
-        ).join('')}
-      </select>
-    </td>
-    <td>${doc.malote_id ? `#${doc.malote_id}` : '<span class="text-muted">—</span>'}</td>
-    <td>${snapshotLink}</td>
-    <td>
-      <button class="btn-icon" title="Excluir" onclick="deletarDoc(${doc.id})">✕</button>
-    </td>
-  </tr>`;
 }
 
 async function updateDocStatus(id, status) {
@@ -458,7 +538,6 @@ async function salvarDocumento() {
     idioma_origem:  document.getElementById('doc-origem').value.trim(),
     idioma_destino: document.getElementById('doc-destino').value.trim(),
     snapshot_url:   document.getElementById('doc-snapshot').value.trim() || null,
-    pai_id:         parseInt(document.getElementById('doc-pai-id').value) || null,
     observacoes:    document.getElementById('doc-obs').value.trim() || null,
   };
   if (!data.os_id || !data.tipo_documento) { toast('Preencha OS e tipo do documento.', 'error'); return; }
@@ -634,8 +713,8 @@ async function loadAuditoria() {
       <thead><tr><th>Ação</th><th>Entidade</th><th>Usuário</th><th>Data/Hora</th></tr></thead>
       <tbody>${logs.map(l => `<tr>
         <td>${l.acao}</td>
-        <td><code style="font-size:11px;color:var(--accent-2)">${l.entidade_afetada}</code></td>
-        <td>${l.user_id ? `#${l.user_id}` : '<span class="text-muted">Sistema</span>'}</td>
+        <td><code style="font-size:11px;color:var(--accent)">${l.entidade_afetada}</code></td>
+        <td>${l.user_nome || '<span class="text-muted">Sistema</span>'}</td>
         <td>${new Date(l.data_hora).toLocaleString('pt-BR')}</td>
       </tr>`).join('')}</tbody>
     </table>`;
@@ -665,6 +744,16 @@ async function populateClienteSelect(selectId, selectedId = null) {
   ).join('');
 }
 
+async function populateGestorSelect(selectId, selectedId = null) {
+  if (!allGestores.length) allGestores = await Api.gestores.list();
+  const sel = document.getElementById(selectId);
+  // Mantém a opção "Nenhum" e adiciona gestores
+  const base = sel.options[0]?.value === '' ? sel.options[0].outerHTML : '<option value="">— Nenhum gestor —</option>';
+  sel.innerHTML = base + allGestores.map(g =>
+    `<option value="${g.id}" ${selectedId == g.id ? 'selected' : ''}>${g.nome}</option>`
+  ).join('');
+}
+
 async function populateOSSelect(selectId) {
   if (!allOrders.length) allOrders = await Api.orders.list();
   const sel = document.getElementById(selectId);
@@ -677,20 +766,13 @@ async function populateOSSelect(selectId) {
 document.getElementById('modal-os').addEventListener('click', async (e) => {
   if (e.target.closest('.modal') && !document.getElementById('os-cliente-id').options.length) {
     await populateClienteSelect('os-cliente-id');
+    await populateGestorSelect('os-gestor-id');
   }
 });
 
 document.getElementById('modal-documento').addEventListener('click', async (e) => {
   if (e.target.closest('.modal') && !document.getElementById('doc-os-id').options.length) {
     await populateOSSelect('doc-os-id');
-    const docs = await Api.documents.list();
-    const sel = document.getElementById('doc-pai-id');
-    docs.forEach(d => {
-      const opt = document.createElement('option');
-      opt.value = d.id;
-      opt.textContent = `#${d.id} – ${d.tipo_documento}`;
-      sel.appendChild(opt);
-    });
   }
 });
 

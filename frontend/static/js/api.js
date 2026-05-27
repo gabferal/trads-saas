@@ -54,6 +54,16 @@ const Api = {
     get:  (id)     => apiFetch(`/clients/${id}`),
     create: (data) => apiFetch('/clients/', { method: 'POST', body: JSON.stringify(data) }),
     update: (id, data) => apiFetch(`/clients/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    delete: (id)   => apiFetch(`/clients/${id}`, { method: 'DELETE' }),
+  },
+
+  // ── Gestores ──────────────────────────────────────
+  gestores: {
+    list: ()       => apiFetch('/gestores/'),
+    get:  (id)     => apiFetch(`/gestores/${id}`),
+    create: (data) => apiFetch('/gestores/', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id, data) => apiFetch(`/gestores/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    delete: (id)   => apiFetch(`/gestores/${id}`, { method: 'DELETE' }),
   },
 
   // ── Ordens de Serviço ─────────────────────────────
